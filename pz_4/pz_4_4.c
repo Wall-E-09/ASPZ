@@ -13,7 +13,6 @@ void buggy_version() {
             printf("Allocated ptr = %p\n", ptr);
         }
         
-        // Використовуємо пам'ять
         strcpy((char*)ptr, "Iteration ");
         ((char*)ptr)[10] = '0' + i;
         ((char*)ptr)[11] = '\0';
@@ -41,7 +40,7 @@ void correct_version() {
         i++;
     }
     
-    free(ptr);  // Звільняємо тільки один раз
+    free(ptr);
 }
 
 int main() {
