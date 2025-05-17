@@ -1,55 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <windows.h>
+#include <signal.h>
+#include <sys/resource.h>
+#include <unistd.h>
 
-#define FILENAME "dice_rolls.txt"
-#define MAX_FILE_SIZE 1024
+void handle_file_limit(int sig) {
+    printf("Перевищено обмеження на розмір файлу\n");
+    exit(1);
+}
 
-void write_roll(FILE *file, int roll) {
-    if (fprintf(file, "Кидок: %d\n", roll) < 0) {
-        perror("Помилка запису у файл");
-        exit(EXIT_FAILURE);
-    }
-    fflush(file);
+void set_file_limit(rlim_t size) {
+    struct rlimit lim = {size, size};
+    setrlimit(RLIMIT_FSIZE, &lim);
 }
 
 int main() {
-    FILE *file;
-    int roll;
-    long file_size = 0;
+    signal(SIGXFSZ, handle_file_limit);
+    set_file_limit(3);  
 
-    file = fopen(FILENAME, "w");
-    if (file == NULL) {
-        perror("Помилка відкриття файлу");
-        return EXIT_FAILURE;
+    FILE *f = fopen("dice.txt", "w");
+    if (!f) {
+        perror("fopen");
+        exit(1);
     }
-    
-    srand((unsigned int)time(NULL));
-    
-    printf("Симуляція кидків кубика...\n");
-    printf("Файл: %s (максимальний розмір: %d байт)\n", FILENAME, MAX_FILE_SIZE);
-    
-    while (1) {
-        roll = rand() % 6 + 1;
-        write_roll(file, roll);
-        
-        fseek(file, 0, SEEK_END);
-        file_size = ftell(file);
-        if (file_size == -1) {
-            perror("Помилка отримання розміру файлу");
-            break;
-        }
-        
-        if (file_size >= MAX_FILE_SIZE) {
-            printf("\nДосягнуто максимальний розмір файлу (%d байт).\n", MAX_FILE_SIZE);
-            break;
-        }
-        
-        printf(".");
+
+    srand(time(NULL));
+    for (int i = 0; i < 1000; i++) {
+        int roll = rand() % 6 + 1;
+        fprintf(f, "Кидок %d: %d\n", i+1, roll);
+        fflush(f);
+        usleep(10000); 
     }
-    
-    fclose(file);
-    printf("\nРезультати збережено у файл: %s\n", FILENAME);
-    return EXIT_SUCCESS;
+
+    fclose(f);
+    return 0;
 }
