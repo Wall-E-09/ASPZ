@@ -18,7 +18,6 @@ void set_file_size_limit() {
     }
 }
 
-// Функція для запису результату кидка у файл
 void write_roll(FILE *file, int roll) {
     if (fprintf(file, "Кидок: %d\n", roll) < 0) {
         perror("Помилка запису у файл");
