@@ -1,38 +1,42 @@
 #include <stdio.h>
 #include <dirent.h>
-#include <string.h>
 #include <sys/stat.h>
-#include <stdbool.h>
+#include <string.h>
+#include <unistd.h>
 
 int main() {
-    DIR *dir = opendir(".");
-    struct dirent *entry;
-    struct stat statbuf;
-    char *files[1000];
-    int count = 0;
-    
-    while ((entry = readdir(dir)) != NULL) {
-        if (strstr(entry->d_name, ".c")) {
-            files[count] = strdup(entry->d_name);
-            count++;
+    DIR *directory = opendir(".");
+    if (!directory) {
+        perror("Не вдалось відкрити каталог");
+        return 1;
+    }
+
+    struct dirent *file_entry;
+    while ((file_entry = readdir(directory)) != NULL) {
+        const char *ext = strrchr(file_entry->d_name, '.');
+        if (ext && strcmp(ext, ".c") == 0) {
+            printf("Знайдено файл: %s\n", file_entry->d_name);
+            printf("Бажаєте додати дозвіл на читання іншим користувачам? (y/n): ");
+
+            char answer = '\0';
+            while ((answer = getchar()) == '\n'); 
+            
+            if (answer == 'y' || answer == 'Y') {
+                struct stat file_info;
+                if (stat(file_entry->d_name, &file_info) == 0) {
+                    mode_t new_mode = file_info.st_mode | S_IROTH;
+                    if (chmod(file_entry->d_name, new_mode) == 0) {
+                        printf("Дозвіл на читання для інших додано.\n");
+                    } else {
+                        perror("Помилка зміни дозволів");
+                    }
+                } else {
+                    perror("Не вдалося отримати інформацію про файл");
+                }
+            }
         }
     }
-    
-    for (int i = 0; i < count; i++) {
-        printf("%d. %s\n", i+1, files[i]);
-    }
-    
-    printf("Grant read permission? (y/n): ");
-    char answer;
-    scanf("%c", &answer);
-    
-    if (answer == 'y') {
-        for (int i = 0; i < count; i++) {
-            chmod(files[i], 0644);
-            free(files[i]);
-        }
-    }
-    
-    closedir(dir);
+
+    closedir(directory);
     return 0;
 }
