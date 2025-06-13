@@ -1,31 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 #include <errno.h>
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        fprintf(stderr, "Usage: %s <seconds>\n", argv[0]);
+        fprintf(stderr, "Використання: %s <секунди>\n", argv[0]);
         return 1;
     }
-    
+
     int seconds = atoi(argv[1]);
     if (seconds <= 0) {
-        fprintf(stderr, "Please specify a positive number of seconds\n");
+        fprintf(stderr, "Час має бути додатнім числом\n");
         return 1;
     }
-    
-    printf("Timer set for %d seconds\n", seconds);
-    
+
+    printf("Таймер запущено на %d секунд...\n", seconds);
+
     struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    ts.tv_sec += seconds;
+    ts.tv_sec = seconds;
+    ts.tv_nsec = 0;
     
-    // Використовуємо абсолютний час для більшої точності
-    while (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL) == EINTR) {
-        // Якщо sleep був перерваний сигналом, продовжуємо
+    int result = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
+    
+    if (result != 0) {
+        if (result == EINTR) {
+            fprintf(stderr, "Таймер був перерваний\n");
+        } else {
+            perror("Помилка clock_nanosleep");
+        }
+        return 1;
     }
-    
-    printf("Time's up! %d seconds have passed.\n", seconds);
+
+    printf("Час вийшов! (%d секунд минуло)\n", seconds);
     return 0;
 }
