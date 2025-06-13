@@ -14,7 +14,7 @@
 Батьківський процес виводить інформацію про завершення кожного процесу.
 
 
-image](https://github.com/user-attachments/assets/b1a3dc44-b661-4252-a095-f4429f160342)
+[image](https://github.com/user-attachments/assets/b1a3dc44-b661-4252-a095-f4429f160342)
 
 3Використання fork()
 Кожен виклик fork() створює точну копію батьківського процесу.
