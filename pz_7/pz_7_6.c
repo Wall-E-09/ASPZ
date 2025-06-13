@@ -1,35 +1,35 @@
 #include <stdio.h>
 #include <dirent.h>
-#include <string.h>
 #include <sys/stat.h>
-#include <stdlib.h>
+#include <string.h>
 
-int compare(const void *a, const void *b) {
-    return strcmp(*(const char **)a, *(const char **)b);
+void list_dirs(const char *path) {
+    DIR *dir = opendir(path);
+    if (!dir) return;
+
+    struct dirent *entry;
+    char fullpath[1024];
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
+
+        struct stat st;
+        if (stat(fullpath, &st) == -1)
+            continue;
+
+        if (S_ISDIR(st.st_mode)) {
+            printf("%s\n", fullpath);
+            list_dirs(fullpath);  
+        }
+    }
+
+    closedir(dir);
 }
 
 int main() {
-    DIR *dir = opendir(".");
-    struct dirent *entry;
-    struct stat statbuf;
-    char *subdirs[1000];
-    int count = 0;
-    
-    while ((entry = readdir(dir)) != NULL) {
-        stat(entry->d_name, &statbuf);
-        if (S_ISDIR(statbuf.st_mode) {
-            subdirs[count] = strdup(entry->d_name);
-            count++;
-        }
-    }
-    
-    qsort(subdirs, count, sizeof(char *), compare);
-    
-    for (int i = 0; i < count; i++) {
-        printf("%s\n", subdirs[i]);
-        free(subdirs[i]);
-    }
-    
-    closedir(dir);
+    list_dirs(".");
     return 0;
 }
