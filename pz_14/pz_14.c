@@ -6,33 +6,27 @@
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        fprintf(stderr, "Використання: %s <секунди>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <seconds>\n", argv[0]);
         return 1;
     }
 
     int seconds = atoi(argv[1]);
     if (seconds <= 0) {
-        fprintf(stderr, "Час має бути додатнім числом\n");
+        fprintf(stderr, "Time must be a positive number\n");
         return 1;
     }
 
-    printf("Таймер запущено на %d секунд...\n", seconds);
+    printf("Timer started for %d seconds...\n", seconds);
 
     struct timespec ts;
     ts.tv_sec = seconds;
     ts.tv_nsec = 0;
-    
-    int result = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
-    
-    if (result != 0) {
-        if (result == EINTR) {
-            fprintf(stderr, "Таймер був перерваний\n");
-        } else {
-            perror("Помилка clock_nanosleep");
-        }
-        return 1;
+
+    while (nanosleep(&ts, &ts) == -1 && errno == EINTR) {
+        // Restart if interrupted by signal
+        continue;
     }
 
-    printf("Час вийшов! (%d секунд минуло)\n", seconds);
+    printf("Time's up! (%d seconds elapsed)\n", seconds);
     return 0;
 }
